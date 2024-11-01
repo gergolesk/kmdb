@@ -52,4 +52,17 @@ public class Movie {
         this.actors = actors;
     } 
         
+    // Перегрузка hashCode и equals
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Movie movie = (Movie) obj;
+        return id != null && id.equals(movie.id);
+    }
 }

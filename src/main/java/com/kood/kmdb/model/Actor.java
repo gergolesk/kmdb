@@ -34,6 +34,19 @@ public class Actor {
     @ManyToMany(mappedBy = "actors")
     @JsonIgnore
     private Set<Movie> movies = new HashSet<>();
-    //private Set<Movie> movies;
+    
+    //
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Actor actor = (Actor) obj;
+        return id != null && id.equals(actor.id);
+    }
 
 }

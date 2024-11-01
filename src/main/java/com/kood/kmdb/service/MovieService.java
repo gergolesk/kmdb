@@ -126,6 +126,7 @@ public class MovieService {
         return movieRepository.findByActorsId(actorId);
     }
 
+
     public List<Actor> getActorsByMovie(Long movieId) {
         Movie movie = getMovieById(movieId);
         List<Actor> result = new ArrayList<Actor>();

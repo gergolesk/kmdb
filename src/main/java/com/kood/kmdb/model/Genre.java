@@ -27,4 +27,18 @@ public class Genre {
     @ManyToMany(mappedBy = "genres")
     @JsonIgnore
     private Set<Movie> movies = new HashSet<>();
+
+    // Перегрузка hashCode и equals
+    @Override
+    public int hashCode() {
+        return id != null ? id.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+        Genre genre = (Genre) obj;
+        return id != null && id.equals(genre.id);
+    }
 }
