@@ -5,6 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -106,6 +107,17 @@ public class MovieController {
         return ResponseEntity.ok(movies);
     }
 
+    @GetMapping("/{id}/actors")
+    public ResponseEntity<List<String>> getActorsInMovie(@PathVariable Long id) {
+        MovieDTO moviedto;
+        moviedto = convertToDTO(movieService.getMovieById(id));
+        return ResponseEntity.ok(moviedto.getActors());
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie movie) {
+        return ResponseEntity.ok(movieService.updateMovie(id, movie));
+    }
 
     private MovieDTO convertToDTO(Movie movie) {
         MovieDTO dto = new MovieDTO();

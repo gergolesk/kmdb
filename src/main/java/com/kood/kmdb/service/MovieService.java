@@ -64,14 +64,14 @@ public class MovieService {
         */
 
         Set<Genre> genres = movie.getGenres().stream()
-                            .map(genre -> genreRepository.findById(genre.getId()).orElseThrow())
+                            .map(genre -> genreRepository.findById(genre.getId()).orElseThrow(() -> new ResourceNotFoundException("Genre not found with ID: " + genre.getId())))
                             .collect(Collectors.toSet());
         movie.setGenres(genres);
         
     
 
         Set<Actor> actors = movie.getActors().stream()
-                            .map(actor -> actorRepository.findById(actor.getId()).orElseThrow())
+                            .map(actor -> actorRepository.findById(actor.getId()).orElseThrow(() -> new ResourceNotFoundException("Actor not found with ID: " + actor.getId())))
                             .collect(Collectors.toSet());
         movie.setActors(actors);
 
@@ -88,6 +88,7 @@ public class MovieService {
                 .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));   
     }
 
+    /* 
     public Movie updateMovie(Long id, Map<String, Object> updates) {
         Movie movie = movieRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Genre not found"));
@@ -108,6 +109,33 @@ public class MovieService {
         }
         );
         return movieRepository.save(movie);
+    }
+    */
+
+    public Movie updateMovie(Long id, Movie updatedMovie) {
+        Movie existingMovie = movieRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with ID: " + id));
+        
+        existingMovie.setTitle(updatedMovie.getTitle());
+        existingMovie.setReleaseYear(updatedMovie.getReleaseYear());
+        existingMovie.setDuration(updatedMovie.getDuration());
+
+        // Обновляем жанры фильма, проверяя существование каждого жанра
+        Set<Genre> genres = updatedMovie.getGenres().stream()
+                            .map(genre -> genreRepository.findById(genre.getId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Genre not found with ID: " + genre.getId())))
+                            .collect(Collectors.toSet());
+        existingMovie.setGenres(genres);
+
+        // Обновляем актеров фильма, проверяя существование каждого актера
+        Set<Actor> actors = updatedMovie.getActors().stream()
+                            .map(actor -> actorRepository.findById(actor.getId())
+                            .orElseThrow(() -> new ResourceNotFoundException("Actor not found with ID: " + actor.getId())))
+                            .collect(Collectors.toSet());
+        existingMovie.setActors(actors);
+
+        return movieRepository.save(existingMovie);
+
     }
 
     public void deleteMovie(Long id) {
@@ -132,6 +160,10 @@ public class MovieService {
         List<Actor> result = new ArrayList<Actor>();
         result.addAll(movie.getActors());
         return result;
+    }
+
+    public List<Movie> getMoviesByTitle(String title) {
+        return movieRepository.findByTitleContainingIgnoreCase(title);
     }
 
 }
