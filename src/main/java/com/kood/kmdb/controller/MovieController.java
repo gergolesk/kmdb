@@ -1,5 +1,8 @@
 package com.kood.kmdb.controller;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.kood.kmdb.DTO.MovieDTO;
+import com.kood.kmdb.exceptions.BadRequestException;
+import com.kood.kmdb.exceptions.ResourceNotFoundException;
 import com.kood.kmdb.model.Actor;
 import com.kood.kmdb.model.Genre;
 import com.kood.kmdb.model.Movie;
@@ -21,9 +26,12 @@ import com.kood.kmdb.service.MovieService;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.util.Random;
+
 @RestController
 @RequestMapping("/api/movies")
-public class MovieController {
+public class MovieController {    
+
     @Autowired
     private MovieService movieService;
 
@@ -33,21 +41,7 @@ public class MovieController {
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
     }
 
-    /*
-    //@GetMapping
-    public ResponseEntity<List<Movie>> getAllMovies() {
-        return ResponseEntity.ok(movieService.getAllMovies());
-    }
-    */
-
-    
-    /*
-    @GetMapping("/{id}")
-    public ResponseEntity<Movie> getMovieById(@PathVariable Long id) {
-        return ResponseEntity.ok(movieService.getMovieById(id));
-    }
-    */
-
+ 
     @GetMapping("/{id}")
     public ResponseEntity<MovieDTO> getMovieById(@PathVariable Long id) {
         return ResponseEntity.ok(convertToDTO(movieService.getMovieById(id)));
@@ -59,49 +53,54 @@ public class MovieController {
         movieService.deleteMovie(id);
         return ResponseEntity.noContent().build();
     }
-    /*
+   
     @GetMapping
-    public ResponseEntity<List<Movie>> getMovies(
+    public ResponseEntity<?> getMovies(
             @RequestParam(required = false) Long genre,
             @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Long actor) {
-        List<Movie> movies;
-        if (genre!=null){
-            movies = movieService.getMoviesByGenre(genre);
-        } else if (year!=null) {
-            movies = movieService.getMoviesByYear(year);
-        } else if (actor!=null) {
-            movies = movieService.getMoviesByActor(actor);
-        }  else {
-            movies = movieService.getAllMovies();
+            @RequestParam(required = false) Long actor,
+            @RequestParam(required = false) String title,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "false") boolean random) {
+
+        if (page < 0 || size < 0) {
+            throw new BadRequestException(title);
         }
 
-        return ResponseEntity.ok(movies);
-    }   
-    */
-    @GetMapping
-    public ResponseEntity<List<MovieDTO>> getMovies(
-            @RequestParam(required = false) Long genre,
-            @RequestParam(required = false) Integer year,
-            @RequestParam(required = false) Long actor) {
-        List<MovieDTO> movies;
+        Pageable pageable = PageRequest.of(page, size);
+        Page<MovieDTO> movies;
     
         if (genre!=null) {
-            movies = movieService.getMoviesByGenre(genre).stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            if (!movieService.existsGenreById(genre)) {
+                throw new ResourceNotFoundException("Genre with ID " + genre + " not found");
+            }
+            movies = movieService.getMoviesByGenre(genre, pageable)
+                    .map(this::convertToDTO);
         } else if (year!=null) {
-            movies = movieService.getMoviesByYear(year).stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            movies = movieService.getMoviesByYear(year, pageable)
+                    .map(this::convertToDTO);
         } else if (actor!=null) {
-            movies = movieService.getMoviesByActor(actor).stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            if (!movieService.existsActorById(actor)) {
+                throw new ResourceNotFoundException("Actor with ID " + actor + " not found");
+            }
+            movies = movieService.getMoviesByActor(actor, pageable)
+                    .map(this::convertToDTO);
+        }  else if (title!=null) {
+            movies = movieService.getMoviesByTitle(title, pageable)
+                    .map(this::convertToDTO);
         } else {
-            movies = movieService.getAllMovies().stream()
-                    .map(this::convertToDTO)
-                    .collect(Collectors.toList());
+            movies = movieService.getAllMovies(pageable)
+                    .map(this::convertToDTO);
+        }
+        if (movies.isEmpty()) {
+            throw new ResourceNotFoundException("No movies found");
+        } 
+        if (random) {
+            Random randomizer = new Random();
+            List<MovieDTO> movieList = movies.getContent();
+            MovieDTO randomMovieDTO = movieList.get(randomizer.nextInt(movieList.size()));
+            return ResponseEntity.ok(randomMovieDTO);
         }
     
         return ResponseEntity.ok(movies);
@@ -109,10 +108,15 @@ public class MovieController {
 
     @GetMapping("/{id}/actors")
     public ResponseEntity<List<String>> getActorsInMovie(@PathVariable Long id) {
+        
+        if (!movieService.existsMovie(id)) {
+            throw new ResourceNotFoundException("Movie with ID " + id + " not found");
+        } 
         MovieDTO moviedto;
         moviedto = convertToDTO(movieService.getMovieById(id));
         return ResponseEntity.ok(moviedto.getActors());
     }
+
 
     @PatchMapping("/{id}")
     public ResponseEntity<Movie> updateMovie(@PathVariable Long id, @RequestBody Movie movie) {

@@ -44,7 +44,6 @@ public class Movie {
     private Set<Actor> actors = new HashSet<>();
  
     public void setGenre(Set<Genre> genres) {
-        //this.genres = new HashSet<Genre>(genres);
         this.genres = genres;
     }
 

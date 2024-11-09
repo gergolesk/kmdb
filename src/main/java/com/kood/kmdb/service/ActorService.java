@@ -10,7 +10,6 @@ import com.kood.kmdb.model.Actor;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class ActorService {
@@ -27,12 +26,11 @@ public class ActorService {
 
     public Actor getActorById(Long id) {
         return actorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Actor not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Actor with ID " + id + " not found"));
     }
 
     public Actor updateActor(Long id, Map<String, Object> updates) {
-        Actor actor = actorRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Genre not found"));
+        Actor actor = getActorById(id);
         updates.forEach((key, value) -> {
             switch (key) {
                 case "name":
@@ -50,35 +48,32 @@ public class ActorService {
     }
 
     public String deleteActor(Long id, boolean force) {
-        //actorRepository.deleteById(id);
-        Optional<Actor> actorOptional = actorRepository.findById(id);
-
-        if (actorOptional.isPresent()) {
-            Actor actor = actorOptional.get();
-
-            // Проверяем наличие связанных фильмов
-            if (!actor.getMovies().isEmpty()) {
-                if (!force) {
-                    // Отмена удаления, если force = false
-                    return "Unable to delete actor '" + actor.getName() +
-                           "' as they are associated with " + actor.getMovies().size() + " movies";
-                } else {
-                    // Удаляем связи, если force = true
-                    actor.getMovies().forEach(movie -> movie.getActors().remove(actor));
-                    actorRepository.delete(actor);
-                    return "Actor '" + actor.getName() + "' and all their relationships were deleted successfully";
-                }
+        
+        Actor actor = getActorById(id);
+        // Checking for movie connections
+        if (!actor.getMovies().isEmpty()) {
+            if (!force) {
+                // Canceling deletion if force = false
+                return "Unable to delete actor '" + actor.getName() +
+                      "' as they are associated with " + actor.getMovies().size() + " movies.\n Use parameter force=true for force deletion.";
             } else {
+                // Deleting connections if force = true
+                actor.getMovies().forEach(movie -> movie.getActors().remove(actor));
                 actorRepository.delete(actor);
-                return "Actor '" + actor.getName() + "' was deleted successfully";
+                return "Actor '" + actor.getName() + "' and all their relationships were deleted successfully";
             }
         } else {
-            return "Actor not found";
+            actorRepository.delete(actor);
+            return "Actor '" + actor.getName() + "' was deleted successfully";
         }
     }
 
     public List<Actor> getActorsByName(String name) {
-        return actorRepository.findByNameContainingIgnoreCase(name);
+        List<Actor> actors = actorRepository.findByNameContainingIgnoreCase(name);
+        if (actors.isEmpty()) {
+            throw new ResourceNotFoundException("No actors found");
+        }
+        return actors;
     }
 
 }

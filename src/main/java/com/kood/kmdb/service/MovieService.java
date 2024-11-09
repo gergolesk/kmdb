@@ -1,8 +1,10 @@
 package com.kood.kmdb.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 
+import org.springframework.stereotype.Service;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import com.kood.kmdb.repository.*;
 import com.kood.kmdb.exceptions.ResourceNotFoundException;
 import com.kood.kmdb.model.Actor;
@@ -23,38 +25,18 @@ public class MovieService {
     @Autowired
     private ActorRepository actorRepository;
 
-    /*
-    @Transactional
-    public Movie createMovie(Movie movie) {
-        Movie savedMovie = movieRepository.save(movie);
-        
-        //Add movie for each actor
-        for (Actor actor : movie.getActors()){
-            actor.getMovies().add(movie);
-            actorRepository.save(actor);
-            
-        }
-        
-        //Add movie for each genre
-        for (Genre genre : movie.getGenres()){
-            genre.getMovies().add(movie);
-        }
-        
-        return savedMovie;
-    }
-    */
 
     public Movie createMovie(Movie movie) {
         /*
-        // Получаем жанр по его ID
+        // Get genre  by ID
         //Genre genre = genreRepository.findById(movieRequest.getGenreId())
         //        .orElseThrow(() -> new ResourceNotFoundException("Genre not found with id: " + movieRequest.getGenreId()));
         List<Genre> genres = genreRepository.findAllById(movieRequest.getGenreId());
 
-        // Получаем актеров по их ID
+        // Get actors by ID
         List<Actor> actors = actorRepository.findAllById(movieRequest.getActorsIds());
           
-        // Создаем новый объект фильма
+        // Create
         Movie movie = new Movie();
         movie.setTitle(movieRequest.getTitle());
         movie.setReleaseYear(movieRequest.getReleaseYear());
@@ -75,59 +57,34 @@ public class MovieService {
                             .collect(Collectors.toSet());
         movie.setActors(actors);
 
-        // Сохраняем фильм в базе данных
+        // Save movie
         return movieRepository.save(movie);
     }
 
-    public List<Movie> getAllMovies() {
-        return movieRepository.findAll();
+    public Page<Movie> getAllMovies(Pageable pageable) {
+        return movieRepository.findAll(pageable);
     }
 
     public Movie getMovieById(Long id) {
         return movieRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Movie not found"));   
+                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with ID: " + id));   
     }
-
-    /* 
-    public Movie updateMovie(Long id, Map<String, Object> updates) {
-        Movie movie = movieRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Genre not found"));
-        updates.forEach((key, value) -> {
-            switch (key) {
-                case "title":
-                    movie.setTitle((String) value);
-                    break;
-                case "releaseYear":
-                    movie.setReleaseYear((int)value);
-                    break;
-                case "duration":
-                    movie.setDuration((int)value);
-                    break;            
-                default:
-                    break;
-            }
-        }
-        );
-        return movieRepository.save(movie);
-    }
-    */
 
     public Movie updateMovie(Long id, Movie updatedMovie) {
-        Movie existingMovie = movieRepository.findById(id)
-                                .orElseThrow(() -> new ResourceNotFoundException("Movie not found with ID: " + id));
+        Movie existingMovie = getMovieById(id);
         
         existingMovie.setTitle(updatedMovie.getTitle());
         existingMovie.setReleaseYear(updatedMovie.getReleaseYear());
         existingMovie.setDuration(updatedMovie.getDuration());
 
-        // Обновляем жанры фильма, проверяя существование каждого жанра
+        // Update genres
         Set<Genre> genres = updatedMovie.getGenres().stream()
                             .map(genre -> genreRepository.findById(genre.getId())
                             .orElseThrow(() -> new ResourceNotFoundException("Genre not found with ID: " + genre.getId())))
                             .collect(Collectors.toSet());
         existingMovie.setGenres(genres);
 
-        // Обновляем актеров фильма, проверяя существование каждого актера
+        // Update actors
         Set<Actor> actors = updatedMovie.getActors().stream()
                             .map(actor -> actorRepository.findById(actor.getId())
                             .orElseThrow(() -> new ResourceNotFoundException("Actor not found with ID: " + actor.getId())))
@@ -139,19 +96,22 @@ public class MovieService {
     }
 
     public void deleteMovie(Long id) {
+        if (!movieRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Movie not found with ID: " + id);
+        }
         movieRepository.deleteById(id);
     }
 
-    public List<Movie> getMoviesByGenre(Long genreId){
-        return movieRepository.findByGenresId(genreId);
+    public Page<Movie> getMoviesByGenre(Long genreId,  Pageable pageable){
+        return movieRepository.findByGenresId(genreId, pageable);
     }
 
-    public List<Movie> getMoviesByYear(int releaseYear) {
-        return movieRepository.findByReleaseYear(releaseYear);
+    public Page<Movie> getMoviesByYear(int releaseYear,  Pageable pageable) {
+        return movieRepository.findByReleaseYear(releaseYear, pageable);
     }
 
-    public List<Movie> getMoviesByActor(Long actorId) {
-        return movieRepository.findByActorsId(actorId);
+    public Page<Movie> getMoviesByActor(Long actorId,  Pageable pageable) {
+        return movieRepository.findByActorsId(actorId, pageable);
     }
 
 
@@ -162,8 +122,20 @@ public class MovieService {
         return result;
     }
 
-    public List<Movie> getMoviesByTitle(String title) {
-        return movieRepository.findByTitleContainingIgnoreCase(title);
+    public Page<Movie> getMoviesByTitle(String title, Pageable pageable) {
+        return movieRepository.findByTitleContainingIgnoreCase(title, pageable);
+    }
+
+    public boolean existsMovie(Long id) {
+        return movieRepository.existsById(id);
+    }
+
+    public boolean existsGenreById(Long genreId) {
+        return genreRepository.existsById(genreId);
+    }
+    
+    public boolean existsActorById(Long actorId) {
+        return actorRepository.existsById(actorId);
     }
 
 }

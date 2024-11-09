@@ -49,8 +49,6 @@ public class ActorController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> deleteActor(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean force) {
-        //actorService.deleteActor(id);
-        //return ResponseEntity.noContent().build();
         String result = actorService.deleteActor(id, force);
         if (result.startsWith("Unable to delete")) {
             return ResponseEntity.badRequest().body(result);

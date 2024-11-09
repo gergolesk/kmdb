@@ -28,7 +28,7 @@ public class Genre {
     @JsonIgnore
     private Set<Movie> movies = new HashSet<>();
 
-    // Перегрузка hashCode и equals
+    // Reload hashCode and equals
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;
