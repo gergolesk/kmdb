@@ -5,6 +5,8 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import java.util.*;
 
@@ -21,7 +23,8 @@ public class Genre {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NonNull
+    @NotNull(message = "Name cannot be null")
+    @Size(min = 1, message = "Name cannot be empty")
     private String name;
 
     @ManyToMany(mappedBy = "genres")

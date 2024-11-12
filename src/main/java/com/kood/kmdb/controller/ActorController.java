@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kood.kmdb.model.Actor;
 import com.kood.kmdb.service.ActorService;
 
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 
 import java.util.List;
@@ -27,11 +28,10 @@ public class ActorController {
     private ActorService actorService;
 
     @PostMapping
-    public ResponseEntity<Actor> createActor(@RequestBody Actor actor){
+    public ResponseEntity<Actor> createActor(@Valid @RequestBody Actor actor){
         return ResponseEntity.status(HttpStatus.CREATED).body(actorService.createActor(actor));
     }
 
-    //@GetMapping
     public ResponseEntity<List<Actor>> getAllActors() {
         return ResponseEntity.ok(actorService.getAllActors());
     }
@@ -51,9 +51,10 @@ public class ActorController {
     public ResponseEntity<String> deleteActor(@PathVariable Long id, @RequestParam(defaultValue = "false") boolean force) {
         String result = actorService.deleteActor(id, force);
         if (result.startsWith("Unable to delete")) {
-            return ResponseEntity.badRequest().body(result);
+            //return ResponseEntity.badRequest().body(result);
+            return ResponseEntity.badRequest().build();
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.noContent().build();
     }
     
     @GetMapping

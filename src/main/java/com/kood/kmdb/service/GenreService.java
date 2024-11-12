@@ -28,27 +28,32 @@ public class GenreService {
     }
 
     public String deleteById(Long id, boolean force) {
+     
+        Optional<Genre> genreOptional = genreRepository.findById(id);
         
-        Genre genre = getGenreById(id);
+        if (genreOptional.isPresent()) {
+            Genre genre = genreOptional.get();
 
-        // Check connections
-        if (!genre.getMovies().isEmpty()) {
-            if (!force) {
-                // Canceling deletion if force = false
-                return "Cannot delete genre '" + genre.getName() +
-                        "' because it has " + genre.getMovies().size() + " associated movies. \n" + //
-                                                        " Use parameter force=true for force deletion.";
+            // Check connection
+            if (!genre.getMovies().isEmpty()) {
+                if (!force) {
+                    // Canceling deletion if force = false
+                    return "Cannot delete genre '" + genre.getName() +
+                           "' because it has " + genre.getMovies().size() + " associated movies";
+                } else {
+                    //  Deleting connections if force = true
+                    genre.getMovies().forEach(movie -> movie.getGenres().remove(genre));
+                    genreRepository.delete(genre);
+                    return "Genre '" + genre.getName() + "' and all its relationships were deleted successfully";
+                }
             } else {
-                // Deleting connections if force = true
-                genre.getMovies().forEach(movie -> movie.getGenres().remove(genre));
                 genreRepository.delete(genre);
-                return "Genre '" + genre.getName() + "' and all its relationships were deleted successfully";
+                return "Genre '" + genre.getName() + "' was deleted successfully";
             }
         } else {
-            genreRepository.delete(genre);
-            return "Genre '" + genre.getName() + "' was deleted successfully";
+            //return "Genre not found";
+            throw new ResourceNotFoundException("Genre not found");
         }
-
 
     }
 

@@ -8,13 +8,15 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 
 import java.time.LocalDate;
 import java.util.*;
+
 
 @Entity
 @Data
@@ -25,7 +27,8 @@ public class Actor {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NonNull
+    @NotNull(message = "Name cannot be null")
+    @Size(min = 1, message = "Name cannot be empty")
     private String name;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -34,6 +37,7 @@ public class Actor {
     @ManyToMany(mappedBy = "actors")
     @JsonIgnore
     private Set<Movie> movies = new HashSet<>();
+    
     
     //
     @Override

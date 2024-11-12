@@ -5,7 +5,6 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -19,6 +18,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.kood.kmdb.model.Genre;
 import com.kood.kmdb.service.GenreService;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/genres")
 public class GenreController {
@@ -26,7 +27,7 @@ public class GenreController {
     private GenreService genreService;
 
     @PostMapping
-    public ResponseEntity<Genre> createGenre(@Validated @RequestBody Genre genre) {
+    public ResponseEntity<Genre> createGenre(@Valid @RequestBody Genre genre) {
         return ResponseEntity.status(HttpStatus.CREATED).body(genreService.creatGenre(genre));
     }
 
@@ -52,7 +53,7 @@ public class GenreController {
         if (result.startsWith("Cannot delete")) {
             return ResponseEntity.badRequest().body(result);
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.noContent().build();
     }
     
 }

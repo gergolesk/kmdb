@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service;
 import com.kood.kmdb.repository.ActorRepository;
 import com.kood.kmdb.exceptions.ResourceNotFoundException;
 import com.kood.kmdb.model.Actor;
-
+import java.util.Optional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -48,23 +48,31 @@ public class ActorService {
     }
 
     public String deleteActor(Long id, boolean force) {
-        
-        Actor actor = getActorById(id);
-        // Checking for movie connections
-        if (!actor.getMovies().isEmpty()) {
-            if (!force) {
-                // Canceling deletion if force = false
-                return "Unable to delete actor '" + actor.getName() +
-                      "' as they are associated with " + actor.getMovies().size() + " movies.\n Use parameter force=true for force deletion.";
+
+        Optional<Actor> actorOptional = actorRepository.findById(id);
+
+        if (actorOptional.isPresent()) {
+            Actor actor = actorOptional.get();
+
+            // Checking for movie connections
+            if (!actor.getMovies().isEmpty()) {
+                if (!force) {
+                    // Canceling deletion if force = false
+                    return "Unable to delete actor '" + actor.getName() +
+                           "' as they are associated with " + actor.getMovies().size() + " movies.\n Use parameter force=true for force deletion.";
+                } else {
+                    // Deleting connections if force = true
+                    actor.getMovies().forEach(movie -> movie.getActors().remove(actor));
+                    actorRepository.delete(actor);
+                    return "Actor '" + actor.getName() + "' and all their relationships were deleted successfully";
+                }
             } else {
-                // Deleting connections if force = true
-                actor.getMovies().forEach(movie -> movie.getActors().remove(actor));
                 actorRepository.delete(actor);
-                return "Actor '" + actor.getName() + "' and all their relationships were deleted successfully";
+                return "Actor '" + actor.getName() + "' was deleted successfully";
             }
         } else {
-            actorRepository.delete(actor);
-            return "Actor '" + actor.getName() + "' was deleted successfully";
+            //return "Actor not found";
+            throw new ResourceNotFoundException("Actor not found");
         }
     }
 

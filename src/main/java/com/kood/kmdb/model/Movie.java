@@ -10,8 +10,11 @@ import jakarta.persistence.ManyToMany;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import java.util.*;
+
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 
 @Entity
@@ -23,10 +26,14 @@ public class Movie {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @NonNull
+    @NotNull(message = "Title cannot be null")
+    @Size(min = 1, message = "Title cannot be empty")
     private String title;
 
+    @Positive(message = "Release year must be a positive number")
     private int releaseYear;
+
+    @Positive(message = "Duration must be a positive number")
     private int duration;
 
     @ManyToMany
@@ -51,7 +58,7 @@ public class Movie {
         this.actors = actors;
     } 
         
-    // Перегрузка hashCode и equals
+    // Reload hashCode и equals
     @Override
     public int hashCode() {
         return id != null ? id.hashCode() : 0;

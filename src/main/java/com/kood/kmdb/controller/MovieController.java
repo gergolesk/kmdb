@@ -23,6 +23,9 @@ import com.kood.kmdb.model.Actor;
 import com.kood.kmdb.model.Genre;
 import com.kood.kmdb.model.Movie;
 import com.kood.kmdb.service.MovieService;
+
+import jakarta.validation.Valid;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,7 +39,7 @@ public class MovieController {
     private MovieService movieService;
 
     @PostMapping
-    public ResponseEntity<Movie> createMovie(@RequestBody Movie movie) {
+    public ResponseEntity<Movie> createMovie(@Valid @RequestBody Movie movie) {
         Movie createdMovie = movieService.createMovie(movie);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdMovie);
     }
@@ -65,7 +68,7 @@ public class MovieController {
             @RequestParam(defaultValue = "false") boolean random) {
 
         if (page < 0 || size < 0) {
-            throw new BadRequestException(title);
+            throw new BadRequestException("Page or size cannot be less than zero");
         }
 
         Pageable pageable = PageRequest.of(page, size);
