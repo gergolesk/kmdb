@@ -22,7 +22,7 @@ The core entities in this project are:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/gergolesk/kmdb.git
+   git clone https://gitea.kood.tech/georgolesk/kmdb.git
    cd kmdb
    ```
 
